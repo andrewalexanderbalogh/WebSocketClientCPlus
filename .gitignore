@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Project specfic
+.DS_STORE
+.idea/
+cmake-build-debug/
+cmake-build-release/
+/easywsclient
+/rapidjson
