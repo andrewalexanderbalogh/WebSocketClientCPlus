@@ -45,7 +45,7 @@ const char* const INIT_CLIENT = "INIT_CLIENT";
 const char* const TARGET_CLIENT = "TARGET_CLIENT";
 
 /* Map control-string constants to shorts, so can use case statement to determine client responses to messages */
-std::map<string, ushort> typeMap;
+std::map<string, short> typeMap;
 
 /* Address of the WebSocket Server we want to connect with */
 const char* const WS_SERVER_ADDR = "ws://192.168.1.150:8080";
@@ -71,7 +71,7 @@ void handle_message(const string& message) {
     const Value& type = jsonParser["type"];
     const Value& content = jsonParser["content"];
 
-    ushort typeValue = typeMap.find(type.GetString())->second;
+    short typeValue = typeMap.find(type.GetString())->second;
     switch (typeValue){
         case 3:                 // INIT_CLIENT
             cout << endl << "***CONNECTED CLIENTS***" << endl;
