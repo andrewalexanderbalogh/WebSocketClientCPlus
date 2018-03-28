@@ -48,7 +48,8 @@ const char* const TARGET_CLIENT = "TARGET_CLIENT";
 std::map<string, short> typeMap;
 
 /* Address of the WebSocket Server we want to connect with */
-const char* const WS_SERVER_ADDR = "ws://192.168.1.150:8080";
+const char* const WS_SERVER_ADDR = "ws://173.255.226.41:8080";
+//const char* const WS_SERVER_ADDR = "ws://192.168.1.150:8080";
 
 /* Setup WebSocket server pointer as a global */
 shared_ptr<WebSocket> ws;
@@ -272,7 +273,8 @@ int main() {
         }
         else if (msgContext) {
             cout << "# Enter message content to send:" << endl;
-            cin >> userMsg;
+			cin.ignore();
+			getline(cin, userMsg);
             jsonMsg = write_message(msgType.c_str(), "LOVELY", userMsg, targetClient);
             // cout << jsonMsg << endl;
             ws->send(jsonMsg);
