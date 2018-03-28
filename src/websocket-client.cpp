@@ -57,6 +57,9 @@ shared_ptr<WebSocket> ws;
 /* Global to indicate to event-loop threads that they should return */
 bool shut_down_thread = false;
 
+/* Global to indicate a proper initial exchange has occured between client and server */
+bool hand_shake_complete = false;
+
 /**Handler for incoming messages from WebSocket Server
  * @param message
  */
@@ -84,6 +87,8 @@ void handle_message(const string& message) {
                 }
             }
             cout << endl << "***********************" << endl;
+
+			hand_shake_complete = true;
             break;
         case 1:                 // SEND_DATA
             /* falls through */
@@ -176,6 +181,7 @@ void websocket_event_loop(){
 
     cout << "!!! WebSocket Connection terminated at server !!!" << endl;
     ws->close();
+	hand_shake_complete = false;
 
     /* We will automatically try to reconnect to the server every 5000ms, by swapping out a new connection to the server, and recursively calling websocket_event_loop */
     cout << "!!! Attempting to reconnect to server !!!" << endl;
@@ -220,12 +226,12 @@ int main() {
     while(msgContext != 99){
 
         /* Make sure we got a connected client. Else just sit. */
-        if (ws->getReadyState() == WebSocket::CLOSED){
+        if (ws->getReadyState() == WebSocket::CLOSED || !hand_shake_complete){
             cout << "# Disconnected from server, please wait as we try to reconnect.." << endl;
             while (ws->getReadyState() == WebSocket::CLOSED){
                 std::this_thread::sleep_for(std::chrono::milliseconds(5000));
             }
-            cout << "# Successfully reconnected to server." << endl;
+            cout << "# Successfully connected to server." << endl;
             continue;
         }
 
