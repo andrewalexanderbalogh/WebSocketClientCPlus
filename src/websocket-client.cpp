@@ -171,7 +171,7 @@ void websocket_event_loop(){
 
 
     while (ws->getReadyState() != WebSocket::CLOSED && !shut_down_thread) {
-        ws->poll(50);   // introduce 50ms timeout between polls to message-buffer, to avoid potential "RangeError: Invalid WebSocket frame: invalid opcode 0" issue at server
+        ws->poll(-1);   // Halt thread until a new message is received in poll input buffer
         ws->dispatch(handle_message);
     }
 
@@ -284,6 +284,7 @@ int main() {
             jsonMsg = write_message(msgType.c_str(), "LOVELY", userMsg, targetClient);
             // cout << jsonMsg << endl;
             ws->send(jsonMsg);
+            ws->poll(); // Complete send action by putting message in poll output buffer
         }
     }
 
