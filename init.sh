@@ -21,7 +21,7 @@ git reset --hard 8022a5f7
 
 cd $WEBSOCKET_PROJ_DIR
 
-# Copy over just the files we need
+# Copy over just the files that are needed
 cp easywsclient/easywsclient.cpp third_party/easywsclient/easywsclient.cpp
 cp easywsclient/easywsclient.hpp third_party/easywsclient/easywsclient.hpp
 cp -R rapidjson/include/rapidjson third_party
