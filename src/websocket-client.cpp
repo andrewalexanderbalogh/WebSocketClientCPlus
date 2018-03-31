@@ -57,7 +57,7 @@ shared_ptr<WebSocket> ws;
 /* Global to indicate to event-loop threads that they should return */
 bool shut_down_thread = false;
 
-/* Global to indicate a proper initial exchange has occured between client and server */
+/* Global to indicate a proper initial exchange has occurred between client and server */
 bool hand_shake_complete = false;
 
 /**Handler for incoming messages from WebSocket Server
@@ -164,33 +164,33 @@ void websocket_event_loop(){
     typeMap.insert(pair<string, int>(INIT_CLIENT, 3));
     typeMap.insert(pair<string, int>(TARGET_CLIENT, 4));
 
+    while(!shut_down_thread) {
 
-    /* Build the initial json message we will send to the WebSocket server as a handshake */
-    string jsonMessage = write_message(INIT_CLIENT, "LOVELY", get_uuid());
-    ws->send(jsonMessage);
+        /* Build the initial json message we will send to the WebSocket server as a handshake */
+        string jsonMessage = write_message(INIT_CLIENT, "LOVELY", get_uuid());
+        ws->send(jsonMessage);
 
+        while (ws->getReadyState() != WebSocket::CLOSED && !shut_down_thread) {
+            ws->poll(-1);   // Halt thread until a new message is received in poll input buffer
+            ws->dispatch(handle_message);
+        }
 
-    while (ws->getReadyState() != WebSocket::CLOSED && !shut_down_thread) {
-        ws->poll(-1);   // Halt thread until a new message is received in poll input buffer
-        ws->dispatch(handle_message);
+        if (shut_down_thread) {
+            break;
+        }
+
+        cout << "!!! WebSocket Connection terminated at server !!!" << endl;
+        ws->close();
+        hand_shake_complete = false;
+
+        /* We will automatically try to reconnect to the server every 5000ms, by swapping out a new connection to the server, and recursively calling websocket_event_loop */
+        cout << "!!! Attempting to reconnect to server !!!" << endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        shared_ptr<WebSocket> new_ws(WebSocket::from_url(WS_SERVER_ADDR));
+        ws.reset();
+        ws.swap(new_ws);
+
     }
-
-    if (shut_down_thread){
-        return;
-    }
-
-    cout << "!!! WebSocket Connection terminated at server !!!" << endl;
-    ws->close();
-	hand_shake_complete = false;
-
-    /* We will automatically try to reconnect to the server every 5000ms, by swapping out a new connection to the server, and recursively calling websocket_event_loop */
-    cout << "!!! Attempting to reconnect to server !!!" << endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    shared_ptr<WebSocket> new_ws(WebSocket::from_url(WS_SERVER_ADDR));
-    ws.reset();
-    ws.swap(new_ws);
-
-    websocket_event_loop();
 }
 
 
@@ -227,11 +227,13 @@ int main() {
 
         /* Make sure we got a connected client. Else just sit. */
         if (ws->getReadyState() == WebSocket::CLOSED || !hand_shake_complete){
-            cout << "# Disconnected from server, please wait as we try to reconnect.." << endl;
+
+
+            if (ws->getReadyState() == WebSocket::CLOSED) cout << "# Disconnected from server, please wait as we try to reconnect.." << endl;
             while (ws->getReadyState() == WebSocket::CLOSED){
                 std::this_thread::sleep_for(std::chrono::milliseconds(5000));
             }
-            cout << "# Successfully connected to server." << endl;
+            if (ws->getReadyState() == WebSocket::CLOSED) cout << "# Successfully connected to server." << endl;
             continue;
         }
 
@@ -273,6 +275,7 @@ int main() {
         if (msgContext == 9){
             jsonMsg = write_message(msgType.c_str());
             ws->send(jsonMsg);
+            ws->poll(); // Complete send action by putting message in poll output buffer
         }
         else if (msgContext == 99){
             break;
@@ -289,9 +292,11 @@ int main() {
     }
 
     /* Properly close client connection before exiting */
-    shut_down_thread = true;
+    shut_down_thread = true;    // TODO : Need thread safe flag/signal to indicate to thread it should cease
     ws->close();
-    wsThread.join();
+
+    // ws->poll();
+    // wsThread.join();
 
 #ifdef _WIN32
     WSACleanup();
