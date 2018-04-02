@@ -3,7 +3,7 @@
 # Our top level project directory
 export WEBSOCKET_PROJ_DIR="$(pwd)"
 
-# The websocket lib to use, and up to the commit we know works
+# The websocket library to use, and up to the commit we know works
 if [ ! -d easywsclient ] ;  then
     git clone https://github.com/dhbaird/easywsclient.git
 fi
